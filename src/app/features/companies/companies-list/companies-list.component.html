@@ -1,0 +1,432 @@
+<div class="companies-page">
+  <!-- HEADER PRINCIPAL -->
+  <div class="header-row">
+    <div>
+      <h2 class="title">Compañías</h2>
+      <p class="subtitle">
+        Gestiona tus cuentas clave, clínicas, farmacias y partners desde un solo lugar.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge">
+        Página {{ page }} · {{ companies.length }} items
+      </span>
+      <button class="btn btn-primary" type="button" (click)="toggleCreateForm()">
+        {{ showCreateForm ? 'Cancelar' : '+ Nueva compañía' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- CARD PRINCIPAL -->
+  <div class="customers-card">
+    <!-- TOOLBAR: BUSCADOR + FILTROS -->
+    <div class="customers-card__header">
+      <div class="customers-card__titles">
+        <h3 class="customers-card__title">Todas Compañias</h3>
+        <span class="customers-card__subtitle">Compañias activas</span>
+      </div>
+
+      <div class="customers-card__actions">
+        <!-- Search principal (name) -->
+        <div class="customers-search">
+          <span class="customers-search__icon">🔍</span>
+          <input
+            class="customers-search__input"
+            type="text"
+            placeholder="Buscar por nombre…"
+            [value]="searchTerm"
+            (input)="onSearchChange($any($event.target).value)"
+          />
+        </div>
+
+        <!-- Filtros rápidos -->
+        <input
+          type="text"
+          class="filter-input"
+          placeholder="Ciudad"
+          [value]="cityFilter"
+          (input)="onCityChange($any($event.target).value)"
+        />
+        <input
+          type="text"
+          class="filter-input"
+          placeholder="Industria"
+          [value]="industryFilter"
+          (input)="onIndustryChange($any($event.target).value)"
+        />
+
+        <button class="btn btn-ghost" type="button" (click)="clearFilters()">
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- FORMULARIO CREAR COMPAÑÍA -->
+    <form
+      *ngIf="showCreateForm"
+      [formGroup]="createForm"
+      (ngSubmit)="submitCompany()"
+      class="create-form"
+    >
+      <div class="create-form__header">
+        <div>
+          <p class="create-title">Nueva compañía</p>
+          <p class="create-subtitle">
+            Guarda datos básicos para empezar a asociar contactos y deals.
+          </p>
+        </div>
+        <span class="create-badge">Quick add</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>
+            Nombre de la compañía
+            <span class="required">*</span>
+          </label>
+          <input type="text" formControlName="name" />
+          <div
+            class="field-error"
+            *ngIf="
+              createForm.get('name')?.invalid &&
+              createForm.get('name')?.touched
+            "
+          >
+            Nombre requerido.
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>Industria</label>
+          <input type="text" formControlName="industry" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Ciudad</label>
+          <input type="text" formControlName="city" />
+        </div>
+        <div class="form-field">
+          <label>País</label>
+          <input type="text" formControlName="country" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Website</label>
+          <input type="text" formControlName="website" />
+        </div>
+        <div class="form-field">
+          <label>Teléfono</label>
+          <input type="text" formControlName="phone" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Dirección</label>
+          <input type="text" formControlName="address" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="isSaving || createForm.invalid"
+        >
+          {{ isSaving ? 'Guardando...' : 'Guardar compañía' }}
+        </button>
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="toggleCreateForm()"
+          [disabled]="isSaving"
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+
+    <!-- ERRORES -->
+    <div *ngIf="error" class="alert alert-error">
+      {{ error }}
+    </div>
+
+    <!-- ESTADO VACÍO -->
+    <div
+      *ngIf="!error && companies.length === 0 && !isLoading"
+      class="empty-state"
+    >
+      <p class="empty-title">No hay registro</p>
+      <p class="empty-text">
+        Empieza creando tu primera empresa o ajusta los filtros de búsqueda.
+      </p>
+    </div>
+
+    <!-- LAYOUT: TABLA + DETALLE -->
+    <div *ngIf="companies.length > 0" class="companies-layout">
+      <!-- 📊 TABLA ESTILO CUSTOMERS -->
+      <div class="customers-table-wrapper">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th (click)="changeSort('name')">
+                Compañía
+                <span class="sort-indicator" *ngIf="sortField === 'name'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </th>
+              <th (click)="changeSort('industry')">
+                Industria
+                <span class="sort-indicator" *ngIf="sortField === 'industry'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </th>
+              <th (click)="changeSort('city')">
+                Ubicación
+                <span class="sort-indicator" *ngIf="sortField === 'city'">
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </th>
+              <th>Contacto</th>
+              
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              *ngFor="let c of sortedCompanies"
+              (click)="selectCompany(c)"
+              class="customers-row"
+            >
+              <!-- COMPANY -->
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">{{ c.name }}</div>
+                  <div class="cell-sub" *ngIf="c.website">
+                    {{ c.website }}
+                  </div>
+                </div>
+              </td>
+
+              <!-- INDUSTRY -->
+              <td>
+                <span class="pill" *ngIf="c.industry; else noIndustry">
+                  {{ c.industry }}
+                </span>
+                <ng-template #noIndustry>
+                  <span class="pill pill--muted">No industry</span>
+                </ng-template>
+              </td>
+
+              <!-- LOCATION -->
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">
+                    {{ c.city || '—' }}
+                  </div>
+                  <div class="cell-sub" *ngIf="c.country">
+                    {{ c.country }}
+                  </div>
+                </div>
+              </td>
+
+              <!-- CONTACT -->
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">
+                    {{ c.phone || '—' }}
+                  </div>
+                  <div class="cell-sub" *ngIf="c.address">
+                    {{ c.address }}
+                  </div>
+                </div>
+              </td>
+
+              <!-- ACTION -->
+              <td
+                class="customers-table__td-actions"
+                (click)="$event.stopPropagation()"
+              >
+              
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 🪪 TARJETA DE DETALLE -->
+      <div
+        class="detail-card-wrapper"
+        *ngIf="selectedCompanyDetail"
+      >
+        <div class="detail-card">
+          <div class="detail-card__header">
+            <div>
+              <h3 class="detail-title">
+                {{ selectedCompanyDetail.name }}
+              </h3>
+              <p class="detail-subtitle">
+                {{ selectedCompanyDetail.industry || 'Sin industria' }}
+              </p>
+            </div>
+
+            <div class="detail-badges">
+              <span
+                class="pill"
+                *ngIf="selectedCompanyDetail.city || selectedCompanyDetail.country"
+              >
+                {{ selectedCompanyDetail.city || '—' }}
+                <span *ngIf="selectedCompanyDetail.country">
+                  · {{ selectedCompanyDetail.country }}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Website</span>
+              <span class="detail-value">
+                <a
+                  *ngIf="selectedCompanyDetail.website; else noWeb"
+                  [href]="selectedCompanyDetail.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ selectedCompanyDetail.website }}
+                </a>
+                <ng-template #noWeb>—</ng-template>
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Teléfono</span>
+              <span class="detail-value">
+                {{ selectedCompanyDetail.phone || '—' }}
+              </span>
+            </div>
+
+            <div class="detail-item detail-item--full">
+              <span class="detail-label">Dirección</span>
+              <span class="detail-value">
+                {{ selectedCompanyDetail.address || '—' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-sections">
+            <!-- CONTACTOS -->
+            <div
+              class="detail-section"
+              *ngIf="selectedCompanyDetail.contacts.length > 0"
+            >
+              <h4 class="detail-section__title">Contactos</h4>
+              <div class="mini-table">
+                <div class="mini-row mini-row--head">
+                  <div>Nombre</div>
+                  <div>Rol</div>
+                  <div>Email</div>
+                  <div>Teléfono</div>
+                </div>
+                <div
+                  class="mini-row"
+                  *ngFor="let ct of selectedCompanyDetail.contacts"
+                >
+                  <div>{{ ct.first_name }} {{ ct.last_name }}</div>
+                  <div>{{ ct.job_title || '—' }}</div>
+                  <div>{{ ct.email || '—' }}</div>
+                  <div>{{ ct.phone || '—' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DEALS -->
+            <div
+              class="detail-section"
+              *ngIf="selectedCompanyDetail.deals.length > 0"
+            >
+              <h4 class="detail-section__title">Ofertas</h4>
+              <div class="mini-table">
+                <div class="mini-row mini-row--head">
+                  <div>Oferta</div>
+                  <div>Stage</div>
+                  <div>Monto</div>
+                  <div>Fecha cierre</div>
+                </div>
+                <div
+                  class="mini-row"
+                  *ngFor="let d of selectedCompanyDetail.deals"
+                >
+                  <div>{{ d.title }}</div>
+                  <div>{{ d.stage }}</div>
+                  <div>{{ d.amount | number:'1.0-0' }}</div>
+                  <div>{{ d.close_date || '—' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTIVITIES -->
+            <div
+              class="detail-section"
+              *ngIf="selectedCompanyDetail.activities.length > 0"
+            >
+              <h4 class="detail-section__title">Actividades recientes</h4>
+              <div class="mini-table">
+                <div class="mini-row mini-row--head">
+                  <div>Tipo</div>
+                  <div>Asunto</div>
+                  <div>Cuándo</div>
+                  <div>Vinculado a</div>
+                </div>
+                <div
+                  class="mini-row"
+                  *ngFor="let a of selectedCompanyDetail.activities"
+                >
+                  <div>{{ a.type }}</div>
+                  <div>{{ a.subject }}</div>
+                  <div>{{ a.due_date || '—' }}</div>
+                  <div>
+                    <span *ngIf="a.contact_name">{{ a.contact_name }}</span>
+                    <span *ngIf="a.contact_name && a.deal_title"> · </span>
+                    <span *ngIf="a.deal_title">{{ a.deal_title }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- /detail-sections -->
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <div class="pagination">
+      <button
+        class="btn btn-ghost"
+        type="button"
+        (click)="prevPage()"
+        [disabled]="page === 1"
+      >
+        ← Previous
+      </button>
+
+      <span class="page-info">
+        Page {{ page }}
+        <span *ngIf="isLastPage">(last)</span>
+      </span>
+
+      <button
+        class="btn btn-ghost"
+        type="button"
+        (click)="nextPage()"
+        [disabled]="isLastPage"
+      >
+        Next →
+      </button>
+    </div>
+  </div>
+</div>

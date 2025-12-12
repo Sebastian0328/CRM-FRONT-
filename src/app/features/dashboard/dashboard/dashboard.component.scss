@@ -1,0 +1,361 @@
+// === LAYOUT GENERAL ===
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  padding: 1.75rem 2rem;
+  background: #0b0c10;
+  min-height: 100vh;
+  color: #f9fafb;
+}
+
+// === HEADER ===
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  .title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0 0 0.25rem;
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #9ca3af;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(148, 163, 184, 0.16);
+  color: #e5e7eb;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+// === BOTONES GENÉRICOS ===
+.btn {
+  border-radius: 999px;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+
+  &-primary {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #f9fafb;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 35px rgba(79, 70, 229, 0.5);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+    }
+  }
+
+  &-ghost {
+    background: transparent;
+    color: #e5e7eb;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+
+    &:hover {
+      background: rgba(148, 163, 184, 0.1);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// === TARJETAS GENÉRICAS ===
+.card {
+  background: radial-gradient(circle at top left, #111827, #020617);
+  border-radius: 1.25rem;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.8),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+.card-header {
+  margin-bottom: 0.9rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #9ca3af;
+  }
+}
+
+// === KPI GRID ===
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.kpi-card {
+  padding: 1.1rem 1.25rem;
+  border-radius: 1.25rem;
+  background: radial-gradient(circle at top left, #111827, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.9);
+
+  .kpi-label {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  .kpi-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+  }
+
+  .kpi-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+}
+
+// === CHARTS GRID ===
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1rem;
+}
+
+.chart-card {
+  padding: 1.25rem 1.2rem;
+}
+
+.chart-wrapper {
+  margin-top: 0.5rem;
+  height: 260px;
+}
+
+// === PIPELINE POR ETAPA ===
+.pipeline-card {
+  .pipeline-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .pipeline-column {
+    padding: 0.75rem 0.9rem;
+    border-radius: 0.9rem;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .pipeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+  }
+
+  .pipeline-stage-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .pipeline-stage-count {
+    font-size: 0.75rem;
+    color: #9ca3af;
+  }
+
+  .pipeline-bar-wrapper {
+    margin: 0.4rem 0 0.5rem;
+  }
+
+  .pipeline-bar-bg {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(55, 65, 81, 0.8);
+    overflow: hidden;
+  }
+
+  .pipeline-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    transition: width 0.25s ease-out;
+  }
+
+  .pipeline-total {
+    font-size: 0.85rem;
+    color: #e5e7eb;
+  }
+}
+
+// === UPCOMING ACTIVITIES / TIMELINE ===
+.activities-card {
+  .timeline-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(31, 41, 55, 0.9);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .timeline-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    margin-top: 0.35rem;
+    background: linear-gradient(135deg, #22c55e, #a3e635);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+  }
+
+  .timeline-content {
+    flex: 1;
+  }
+
+  .timeline-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+    margin-bottom: 0.15rem;
+  }
+
+  .timeline-type {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #a855f7;
+  }
+
+  .timeline-subject {
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .timeline-meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+
+  .timeline-meta span {
+    margin-right: 0.25rem;
+  }
+}
+
+// === EMPTY / LOADING / ALERTS ===
+.empty-state {
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px dashed rgba(75, 85, 99, 0.8);
+  text-align: left;
+
+  &.small {
+    padding: 0.8rem;
+  }
+
+  .empty-title {
+    margin: 0 0 0.2rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .empty-text {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+}
+
+.loading-block {
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.6);
+  color: #fecaca;
+  font-size: 0.85rem;
+}
+
+// === RESPONSIVE ===
+@media (max-width: 1024px) {
+  .dashboard-page {
+    padding: 1.25rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pipeline-card .pipeline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pipeline-card .pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+}

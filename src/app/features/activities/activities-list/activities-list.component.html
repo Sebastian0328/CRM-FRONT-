@@ -1,0 +1,228 @@
+<div class="activities-page">
+  <!-- HEADER -->
+  <div class="header-row">
+    <div>
+      <h2 class="title">Activities</h2>
+      <p class="subtitle">
+        Llamadas, emails, reuniones y tareas que impulsan tus deals.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge">
+        Page {{ page }} · {{ activities.length }} items
+      </span>
+      <button class="btn btn-primary" type="button" (click)="toggleCreateForm()">
+        {{ showCreateForm ? 'Cancel' : '+ New activity' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <div class="customers-card">
+    <div class="customers-card__header">
+      <div class="customers-card__titles">
+        <h3 class="customers-card__title">Activity Manager</h3>
+        <p class="customers-card__subtitle">Organiza y da seguimiento</p>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="card-toolbar">
+      <div class="toolbar-left">
+        <select class="filter-input" [value]="typeFilter" (change)="onTypeChange($any($event.target).value)">
+          <option value="">All Types</option>
+          <option *ngFor="let t of activityTypes" [value]="t">{{ t | titlecase }}</option>
+        </select>
+
+        <input type="number" class="filter-input" placeholder="Owner user ID"
+               [value]="ownerFilter ?? ''" (input)="onOwnerChange($any($event.target).value)" />
+
+        <input type="number" class="filter-input" placeholder="Deal ID"
+               [value]="dealFilter ?? ''" (input)="onDealChange($any($event.target).value)" />
+
+        <input type="date" class="filter-input"
+               [value]="dueFromFilter" (change)="onDueFromChange($any($event.target).value)" />
+
+        <input type="date" class="filter-input"
+               [value]="dueToFilter" (change)="onDueToChange($any($event.target).value)" />
+
+        <button class="btn btn-ghost" type="button" (click)="clearFilters()">Clear</button>
+      </div>
+
+      <div class="card-toolbar__right" *ngIf="isLoading">
+        <span class="spinner"></span>
+        <span class="loading-text">Loading...</span>
+      </div>
+    </div>
+
+    <!-- FORM -->
+    <form *ngIf="showCreateForm" [formGroup]="createForm" (ngSubmit)="submitActivity()" class="create-form">
+      <div class="create-form__header">
+        <div>
+          <p class="create-title">New activity</p>
+          <p class="create-subtitle">Planifica tu siguiente movimiento.</p>
+        </div>
+        <span class="create-badge">Quick Add</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Type <span class="required">*</span></label>
+          <select formControlName="type">
+            <option *ngFor="let t of activityTypes" [value]="t">{{ t | titlecase }}</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label>Subject <span class="required">*</span></label>
+          <input type="text" formControlName="subject" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Due date</label>
+          <input type="datetime-local" formControlName="due_date" />
+        </div>
+
+        <div class="form-field">
+          <label>Deal ID</label>
+          <input type="number" formControlName="deal_id" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Contact ID</label>
+          <input type="number" formControlName="contact_id" />
+        </div>
+
+        <div class="form-field">
+          <label>Owner user ID</label>
+          <input type="number" formControlName="owner_user_id" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Notes</label>
+          <textarea rows="2" formControlName="notes"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="isSaving || createForm.invalid">
+          {{ isSaving ? 'Saving...' : 'Save activity' }}
+        </button>
+        <button class="btn btn-ghost" type="button" (click)="toggleCreateForm()">Cancel</button>
+      </div>
+    </form>
+
+    <!-- EMPTY -->
+    <div *ngIf="activities.length === 0 && !isLoading" class="empty-state">
+      <p class="empty-title">No activities found</p>
+      <p class="empty-text">Busca por tipo, fecha, usuario o deal.</p>
+    </div>
+
+    <!-- GRID LAYOUT (TABLE + DETAIL) -->
+    <div class="activities-layout" *ngIf="activities.length > 0">
+      <!-- TABLE -->
+      <div class="customers-table-wrapper">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th (click)="changeSort('due_date')">Due Date</th>
+              <th (click)="changeSort('type')">Type</th>
+              <th (click)="changeSort('subject')">Subject</th>
+              <th>Deal</th>
+              <th>Contact</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr *ngFor="let a of sortedActivities" (click)="selectActivity(a)" class="customers-row">
+              <td>{{ a.due_date ? (a.due_date | date:'short') : '—' }}</td>
+
+              <td>
+                <span class="pill pill--stage">{{ a.type | titlecase }}</span>
+              </td>
+
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">{{ a.subject }}</div>
+                  <div class="cell-sub" *ngIf="a.notes">{{ a.notes }}</div>
+                </div>
+              </td>
+
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">{{ a.deal_title || '#' + a.deal_id }}</div>
+                  <div class="cell-sub" *ngIf="a.company_name">{{ a.company_name }}</div>
+                </div>
+              </td>
+
+              <td>{{ a.contact_name || ('#' + a.contact_id) || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- PAGINATION -->
+        <div class="pagination customers-footer">
+          <div class="customers-footer__meta">
+            Showing page {{ page }}
+          </div>
+
+          <div class="pagination-controls">
+            <button class="btn btn-ghost" (click)="prevPage()" [disabled]="page === 1">← Prev</button>
+            <span class="page-info">{{ page }}</span>
+            <button class="btn btn-ghost" (click)="nextPage()" [disabled]="isLastPage">Next →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETAIL PANEL -->
+      <div class="detail-card-wrapper">
+        <div *ngIf="selectedActivity" class="detail-card">
+          <div class="detail-card__header">
+            <div>
+              <h3 class="detail-title">{{ selectedActivity.subject }}</h3>
+              <p class="detail-subtitle">
+                {{ selectedActivity.type | titlecase }} ·
+                {{ selectedActivity.due_date | date:'short' }}
+              </p>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Deal</span>
+              <span class="detail-value">{{ selectedActivity.deal_title || '#' + selectedActivity.deal_id }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Contact</span>
+              <span class="detail-value">{{ selectedActivity.contact_name || '#' + selectedActivity.contact_id }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Owner</span>
+              <span class="detail-value">{{ selectedActivity.owner_user_id }}</span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Created</span>
+              <span class="detail-value">{{ selectedActivity.created_at | date:'short' }}</span>
+            </div>
+          </div>
+
+          <div class="detail-footer" *ngIf="selectedActivity.notes">
+            <p class="detail-hint">
+              {{ selectedActivity.notes }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

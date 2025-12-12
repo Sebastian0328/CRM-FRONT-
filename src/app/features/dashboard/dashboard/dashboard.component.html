@@ -1,0 +1,195 @@
+<div class="dashboard-page" *ngIf="summary as s; else loadingOrError">
+  <div class="header-row">
+    <div>
+      <h2 class="title">Dashboard</h2>
+      <p class="subtitle">
+        Vista rápida de tu pipeline y las próximas acciones que no puedes dejar pasar.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge">
+        {{ totalDeals }} deals · {{ s.upcoming_activities.length }} upcoming activities
+      </span>
+      <button class="btn btn-ghost" type="button" (click)="refresh()">
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- TOP METRICS -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <p class="kpi-label">Total pipeline</p>
+      <p class="kpi-value">
+        {{ s.total_pipeline_value | number:'1.0-0' }} €
+      </p>
+      <p class="kpi-hint">
+        Suma de todos los deals activos, por etapa.
+      </p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="kpi-label">Open deals</p>
+      <p class="kpi-value">
+        {{ totalDeals }}
+      </p>
+      <p class="kpi-hint">
+        Deals en prospecting, qualified, proposal o en estado abierto.
+      </p>
+    </div>
+
+    <div class="kpi-card">
+      <p class="kpi-label">Upcoming activities ({{ daysAhead }} days)</p>
+      <p class="kpi-value">
+        {{ s.upcoming_activities.length }}
+      </p>
+      <p class="kpi-hint">
+        Llamadas, emails, meetings y tareas con fecha próxima.
+      </p>
+    </div>
+  </div>
+    <!-- CHARTS: PIPELINE -->
+  <div class="charts-grid">
+    <div class="card chart-card">
+      <div class="card-header">
+        <h3>Pipeline value by stage</h3>
+        <p>Valor total estimado (€) para cada etapa del pipeline.</p>
+      </div>
+      <div class="chart-wrapper">
+        <canvas
+          baseChart
+          [data]="barChartData"
+          [options]="barChartOptions"
+          [type]="barChartType"
+        >
+        </canvas>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div class="card-header">
+        <h3>Deals by stage</h3>
+        <p>Cantidad de deals activos en cada etapa.</p>
+      </div>
+      <div class="chart-wrapper">
+        <canvas
+          baseChart
+          [data]="doughnutChartData"
+          [options]="doughnutChartOptions"
+          [type]="doughnutChartType"
+        >
+        </canvas>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PIPELINE POR ETAPA -->
+  <div class="card pipeline-card">
+    <div class="card-header">
+      <h3>Pipeline by stage</h3>
+      <p>Distribución de valor y número de deals por etapa.</p>
+    </div>
+
+    <div class="pipeline-grid">
+      <div class="pipeline-column" *ngFor="let st of sortedStages">
+        <div class="pipeline-header">
+          <div class="pipeline-stage-label">
+            {{ st.stage | titlecase }}
+          </div>
+          <div class="pipeline-stage-count">
+            {{ st.count }} deals
+          </div>
+        </div>
+
+        <div class="pipeline-bar-wrapper">
+          <div class="pipeline-bar-bg">
+            <div
+              class="pipeline-bar-fill"
+              [style.width.%]="
+                totalDeals ? (st.count / totalDeals) * 100 : 0
+              "
+            ></div>
+          </div>
+        </div>
+
+        <div class="pipeline-total">
+          {{ st.total_amount | number:'1.0-0' }} €
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPCOMING ACTIVITIES -->
+  <div class="card activities-card">
+    <div class="card-header">
+      <h3>Upcoming activities</h3>
+      <p>
+        Lo que viene en los próximos {{ daysAhead }} días: llamadas, emails,
+        reuniones y tareas.
+      </p>
+    </div>
+
+    <div *ngIf="upcomingActivities.length === 0" class="empty-state small">
+      <p class="empty-title">No upcoming activities</p>
+      <p class="empty-text">
+        Todo al día. Programa nuevas actividades desde deals, contacts o companies.
+      </p>
+    </div>
+
+    <ul *ngIf="upcomingActivities.length > 0" class="timeline-list">
+      <li *ngFor="let a of upcomingActivities" class="timeline-item">
+        <div class="timeline-dot"></div>
+
+        <div class="timeline-content">
+          <div class="timeline-main">
+            <span class="timeline-type">
+              {{ a.type | uppercase }}
+            </span>
+            <span class="timeline-subject">
+              {{ a.subject }}
+            </span>
+          </div>
+
+          <div class="timeline-meta">
+            <span class="timeline-date">
+              {{ a.due_date | date:'short' }}
+            </span>
+
+            <span *ngIf="a.contact_name" class="timeline-contact">
+              · {{ a.contact_name }}
+            </span>
+
+            <span *ngIf="a.company_id" class="timeline-company">
+              · Company #{{ a.company_id }}
+            </span>
+
+            <span *ngIf="a.deal_id" class="timeline-deal">
+              · Deal #{{ a.deal_id }}
+            </span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- LOADING / ERROR -->
+<ng-template #loadingOrError>
+  <div class="dashboard-page">
+    <div class="header-row">
+      <div>
+        <h2 class="title">Dashboard</h2>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-block">
+      Loading dashboard...
+    </div>
+
+    <div *ngIf="!isLoading && error" class="alert alert-error">
+      {{ error }}
+    </div>
+  </div>
+</ng-template>

@@ -1,0 +1,408 @@
+<div class="contacts-page">
+  <!-- HEADER PRINCIPAL -->
+  <div class="header-row">
+    <div>
+      <h2 class="title">Contacts</h2>
+      <p class="subtitle">
+        Personas clave con las que hablas en clínicas, farmacias y partners.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge">
+        Pagina {{ page }} · {{ contacts.length }} items
+      </span>
+      <button class="btn btn-primary" type="button" (click)="toggleCreateForm()">
+        {{ showCreateForm ? 'Cancel' : '+ New contact' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- CARD PRINCIPAL TIPO “CUSTOMERS” -->
+  <div class="customers-card">
+    <!-- HEADER INTERNO CARD: título + subtítulo + podría ir un filtro rápido -->
+    <div class="customers-card__header">
+      <div class="customers-card__titles">
+        <p class="customers-card__title">Todos los contactos </p>
+        <p class="customers-card__subtitle">Contactos activos en la red</p>
+      </div>
+
+      <div class="customers-card__actions">
+        <!-- Podrías añadir aquí un futuro “Sort by” si quieres -->
+      </div>
+    </div>
+
+    <!-- TOOLBAR (BUSCADOR + FILTROS) -->
+    <div class="card-toolbar">
+      <div class="toolbar-left">
+        <div class="customers-search">
+          <span class="customers-search__icon">🔍</span>
+          <input
+            type="text"
+            class="customers-search__input"
+            placeholder="Search by name or email..."
+            [value]="searchTerm"
+            (input)="onSearchChange($any($event.target).value)"
+          />
+        </div>
+
+        <input
+          type="number"
+          class="filter-input"
+          placeholder="Company ID"
+          [value]="companyFilter ?? ''"
+          (input)="onCompanyFilterChange($any($event.target).value)"
+        />
+
+        <button class="btn btn-ghost" type="button" (click)="clearFilters()">
+          Clear
+        </button>
+      </div>
+
+      <div class="card-toolbar__right" *ngIf="isLoading">
+        <span class="spinner"></span>
+        <span class="loading-text">Loading...</span>
+      </div>
+    </div>
+
+    <!-- FORM CREAR CONTACTO -->
+    <form
+      *ngIf="showCreateForm"
+      [formGroup]="createForm"
+      (ngSubmit)="submitContact()"
+      class="create-form"
+    >
+      <div class="create-form__header">
+        <div>
+          <p class="create-title">Nuevo contacto</p>
+          <p class="create-subtitle">
+            Guarda la persona clave para asociarla a companies y deals.
+          </p>
+        </div>
+        <span class="create-badge">Quick add</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>
+            First name
+            <span class="required">*</span>
+          </label>
+          <input type="text" formControlName="first_name" />
+          <div
+            class="field-error"
+            *ngIf="
+              createForm.get('first_name')?.invalid &&
+              createForm.get('first_name')?.touched
+            "
+          >
+            First name is required.
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>
+            Last name
+            <span class="required">*</span>
+          </label>
+          <input type="text" formControlName="last_name" />
+          <div
+            class="field-error"
+            *ngIf="
+              createForm.get('last_name')?.invalid &&
+              createForm.get('last_name')?.touched
+            "
+          >
+            Last name is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Email</label>
+          <input type="email" formControlName="email" />
+        </div>
+
+        <div class="form-field">
+          <label>Phone</label>
+          <input type="text" formControlName="phone" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Position</label>
+          <input type="text" formControlName="position" />
+        </div>
+
+        <div class="form-field">
+          <label>Company ID</label>
+          <input type="number" formControlName="company_id" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="isSaving || createForm.invalid"
+        >
+          {{ isSaving ? 'Saving...' : 'Save contact' }}
+        </button>
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="toggleCreateForm()"
+          [disabled]="isSaving"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+
+    <!-- ERRORES -->
+    <div *ngIf="error" class="alert alert-error">
+      {{ error }}
+    </div>
+
+    <!-- VACÍO -->
+    <div
+      *ngIf="!error && contacts.length === 0 && !isLoading"
+      class="empty-state"
+    >
+      <p class="empty-title">No contacts found</p>
+      <p class="empty-text">
+        Crea tu primer contacto o ajusta los filtros de búsqueda.
+      </p>
+    </div>
+
+    <!-- LAYOUT TABLA + DETALLE -->
+    <div
+      class="contacts-layout"
+      *ngIf="contacts.length > 0"
+    >
+      <!-- TABLA PRINCIPAL -->
+      <div class="customers-table-wrapper">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th (click)="changeSort('first_name')">
+                Nombre
+                <span
+                  class="sort-indicator"
+                  *ngIf="sortField === 'first_name'"
+                >
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </th>
+              <th (click)="changeSort('email')">
+                Email
+                <span
+                  class="sort-indicator"
+                  *ngIf="sortField === 'email'"
+                >
+                  {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                </span>
+              </th>
+              <th>Phone</th>
+              <th>Position</th>
+              <th>Company</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let c of sortedContacts"
+              (click)="selectContact(c)"
+              class="customers-row"
+            >
+              <td>
+                <div class="cell-main">
+                  <div class="cell-title">
+                    {{ c.first_name }} {{ c.last_name }}
+                  </div>
+                </div>
+              </td>
+              <td>{{ c.email || '—' }}</td>
+              <td>{{ c.phone || '—' }}</td>
+              <td>{{ c.position || '—' }}</td>
+              <td>{{ c.company_name || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- PAGINACIÓN -->
+        <div class="pagination customers-footer">
+          <div class="customers-footer__meta">
+            Showing page {{ page }}
+          </div>
+
+          <div class="pagination-controls">
+            <button
+              class="btn btn-ghost"
+              type="button"
+              (click)="prevPage()"
+              [disabled]="page === 1"
+            >
+              ← Previous
+            </button>
+
+            <span class="page-info">
+              Page {{ page }}
+              <span *ngIf="isLastPage">(last)</span>
+            </span>
+
+            <button
+              class="btn btn-ghost"
+              type="button"
+              (click)="nextPage()"
+              [disabled]="isLastPage"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DE DETALLE -->
+      <div class="detail-card-wrapper">
+        <div *ngIf="detailLoading" class="detail-loading">
+          Loading contact details...
+        </div>
+
+        <div
+          *ngIf="selectedContactDetail && !detailLoading"
+          class="detail-card"
+        >
+          <div class="detail-card__header">
+            <div>
+              <h3 class="detail-title">
+                {{ selectedContactDetail.first_name }}
+                {{ selectedContactDetail.last_name }}
+              </h3>
+              <p class="detail-subtitle">
+                {{ selectedContactDetail.position || 'No role specified' }}
+              </p>
+            </div>
+
+            <div class="detail-header-right">
+              <span
+                class="pill pill--muted"
+                *ngIf="selectedContactDetail.company_name"
+              >
+                {{ selectedContactDetail.company_name }}
+              </span>
+              <span
+                class="badge-soft"
+                *ngIf="selectedContactDetail.company_industry"
+              >
+                {{ selectedContactDetail.company_industry }}
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Email</span>
+              <span class="detail-value">
+                <a
+                  *ngIf="selectedContactDetail.email; else noEmail"
+                  [href]="'mailto:' + selectedContactDetail.email"
+                >
+                  {{ selectedContactDetail.email }}
+                </a>
+                <ng-template #noEmail>—</ng-template>
+              </span>
+            </div>
+
+            <div class="detail-item">
+              <span class="detail-label">Phone</span>
+              <span class="detail-value">
+                {{ selectedContactDetail.phone || '—' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-sections">
+            <!-- DEALS -->
+            <section class="detail-section">
+              <div class="detail-section__header">
+                <h4 class="detail-section__title">Deals</h4>
+                <span class="detail-section__counter">
+                  {{ selectedContactDetail.deals.length }}
+                </span>
+              </div>
+
+              <ng-container
+                *ngIf="selectedContactDetail.deals.length > 0; else noDeals"
+              >
+                <div class="mini-table">
+                  <div class="mini-row mini-row--head">
+                    <div>Deal</div>
+                    <div>Stage</div>
+                    <div>Amount</div>
+                    <div>Close date</div>
+                  </div>
+
+                  <div
+                    class="mini-row"
+                    *ngFor="let d of selectedContactDetail.deals"
+                  >
+                    <div class="mini-title">{{ d.title }}</div>
+                    <div class="mini-pill-stage">{{ d.stage }}</div>
+                    <div>{{ d.amount | number:'1.0-0' }}</div>
+                    <div>{{ d.close_date || '—' }}</div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #noDeals>
+                <p class="empty-sub">No deals for this contact yet.</p>
+              </ng-template>
+            </section>
+
+            <!-- ACTIVITIES -->
+            <section class="detail-section detail-section--full">
+              <div class="detail-section__header">
+                <h4 class="detail-section__title">Activities</h4>
+                <span class="detail-section__counter">
+                  {{ selectedContactDetail.activities.length }}
+                </span>
+              </div>
+
+              <ng-container
+                *ngIf="
+                  selectedContactDetail.activities.length > 0;
+                  else noActivities
+                "
+              >
+                <div class="mini-table mini-table--compact">
+                  <div class="mini-row mini-row--head">
+                    <div>Type</div>
+                    <div>Subject</div>
+                    <div>When</div>
+                    <div>Deal</div>
+                  </div>
+
+                  <div
+                    class="mini-row"
+                    *ngFor="let a of selectedContactDetail.activities"
+                  >
+                    <div class="mini-pill-type">{{ a.type }}</div>
+                    <div class="mini-title">{{ a.subject }}</div>
+                    <div>{{ a.due_date || '—' }}</div>
+                    <div>{{ a.deal_title || '—' }}</div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #noActivities>
+                <p class="empty-sub">No activities linked yet.</p>
+              </ng-template>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,69 @@
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
+<!-- * * * * * * * to get started with your project! * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <span class="sidebar__logo-mark">CRM</span>
+      <span class="sidebar__logo-text">JANO CRM</span>
+    </div>
+
+    <nav class="sidebar__nav">
+      <a
+        routerLink="/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="sidebar__link"
+      >
+        <span>Dashboard</span>
+      </a>
+
+      <a
+        routerLink="/companies"
+        routerLinkActive="active"
+        class="sidebar__link"
+      >
+        <span>Compañias</span>
+      </a>
+
+      <a
+        routerLink="/contacts"
+        routerLinkActive="active"
+        class="sidebar__link"
+      >
+        <span>Contactos</span>
+      </a>
+
+      <a
+        routerLink="/deals"
+        routerLinkActive="active"
+        class="sidebar__link"
+      >
+        <span>Deals</span>
+      </a>
+
+      <a
+        routerLink="/activities"
+        routerLinkActive="active"
+        class="sidebar__link"
+      >
+        <span>Actividades</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <header class="content__header">
+      <h1 class="content__title">EMPRESA</h1>
+    </header>
+
+    <section class="content__body">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>

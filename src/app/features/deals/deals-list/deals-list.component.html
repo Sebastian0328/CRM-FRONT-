@@ -1,0 +1,432 @@
+<div class="deals-page">
+  <div class="header-row">
+    <div>
+      <h2 class="title">Deals</h2>
+      <p class="subtitle">
+        Oportunidades en tu pipeline: desde prospecting hasta won.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <span class="badge">
+        Page {{ page }} · {{ deals.length }} items
+      </span>
+      <button class="btn btn-primary" type="button" (click)="toggleCreateForm()">
+        + New deal
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <!-- 🔁 PIPELINE VISUAL -->
+    <div class="pipeline" *ngIf="deals.length > 0">
+      <div
+        class="pipeline-column"
+        *ngFor="let col of pipelineColumns"
+      >
+        <div class="pipeline-header">
+          <div class="pipeline-stage-label">
+            {{ col.stage | titlecase }}
+          </div>
+          <div class="pipeline-stage-counter">
+            {{ col.count }} deals
+          </div>
+        </div>
+
+        <div class="pipeline-total">
+          {{ col.totalAmount | number:'1.0-0' }} EUR
+        </div>
+
+        <ul class="pipeline-list">
+          <li
+            *ngFor="let d of col.deals | slice:0:5"
+            class="pipeline-deal"
+            (click)="selectDeal(d)"
+          >
+            <div class="pipeline-deal-title">
+              {{ d.title }}
+            </div>
+            <div class="pipeline-deal-meta">
+              <span class="pipeline-deal-amount">
+                {{ d.amount | number:'1.0-0' }} {{ d.currency }}
+              </span>
+              <span class="pipeline-deal-company">
+                {{ d.company_name || ('#' + d.company_id) }}
+              </span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="card-toolbar">
+      <select
+        class="filter-select"
+        [value]="stageFilter"
+        (change)="onStageChange($any($event.target).value)"
+      >
+        <option value="">All stages</option>
+        <option *ngFor="let s of stages" [value]="s">
+          {{ s }}
+        </option>
+      </select>
+
+      <input
+        type="number"
+        class="filter-input"
+        placeholder="Company ID"
+        [value]="companyFilter ?? ''"
+        (input)="onCompanyFilterChange($any($event.target).value)"
+      />
+
+      <input
+        type="number"
+        class="filter-input"
+        placeholder="Owner user ID"
+        [value]="ownerFilter ?? ''"
+        (input)="onOwnerFilterChange($any($event.target).value)"
+      />
+
+      <button class="btn btn-ghost" type="button" (click)="clearFilters()">
+        Clear
+      </button>
+
+      <div class="card-toolbar__right" *ngIf="isLoading">
+        <span class="spinner"></span>
+        <span class="loading-text">Loading...</span>
+      </div>
+    </div>
+
+    <!-- FORM CREAR DEAL -->
+    <form
+      *ngIf="showCreateForm"
+      [formGroup]="createForm"
+      (ngSubmit)="submitDeal()"
+      class="create-form"
+    >
+      <div class="form-row">
+        <div class="form-field">
+          <label>
+            Title
+            <span class="required">*</span>
+          </label>
+          <input type="text" formControlName="title" />
+          <div
+            class="field-error"
+            *ngIf="
+              createForm.get('title')?.invalid &&
+              createForm.get('title')?.touched
+            "
+          >
+            Title is required.
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>
+            Amount
+            <span class="required">*</span>
+          </label>
+          <input type="number" formControlName="amount" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Currency</label>
+          <input type="text" formControlName="currency" />
+        </div>
+
+        <div class="form-field">
+          <label>Stage</label>
+          <select formControlName="stage">
+            <option *ngFor="let s of stages" [value]="s">
+              {{ s }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Close date</label>
+          <input type="date" formControlName="close_date" />
+        </div>
+
+        <div class="form-field">
+          <label>
+            Company ID
+            <span class="required">*</span>
+          </label>
+          <input type="number" formControlName="company_id" />
+          <div
+            class="field-error"
+            *ngIf="
+              createForm.get('company_id')?.invalid &&
+              createForm.get('company_id')?.touched
+            "
+          >
+            Company is required.
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Contact ID</label>
+          <input type="number" formControlName="contact_id" />
+        </div>
+
+        <div class="form-field">
+          <label>Owner user ID</label>
+          <input type="number" formControlName="owner_user_id" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="btn btn-primary"
+          type="submit"
+          [disabled]="isSaving || createForm.invalid"
+        >
+          {{ isSaving ? 'Saving...' : 'Save deal' }}
+        </button>
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="toggleCreateForm()"
+          [disabled]="isSaving"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+
+    <!-- ERRORES -->
+    <div *ngIf="error" class="alert alert-error">
+      {{ error }}
+    </div>
+
+    <!-- VACÍO -->
+    <div
+      *ngIf="!error && deals.length === 0 && !isLoading"
+      class="empty-state"
+    >
+      <p class="empty-title">No deals found</p>
+      <p class="empty-text">
+        Crea tu primer deal o ajusta los filtros del pipeline.
+      </p>
+    </div>
+
+    <!-- TABLA -->
+    <div *ngIf="deals.length > 0" class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th (click)="changeSort('title')">
+              Deal
+              <span class="sort-indicator" *ngIf="sortField === 'title'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th>Company</th>
+            <th>Contact</th>
+            <th (click)="changeSort('stage')">
+              Stage
+              <span class="sort-indicator" *ngIf="sortField === 'stage'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th (click)="changeSort('amount')">
+              Amount
+              <span class="sort-indicator" *ngIf="sortField === 'amount'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+            <th (click)="changeSort('close_date')">
+              Close date
+              <span class="sort-indicator" *ngIf="sortField === 'close_date'">
+                {{ sortDirection === 'asc' ? '▲' : '▼' }}
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let d of sortedDeals"
+            (click)="selectDeal(d)"
+            class="clickable-row"
+          >
+            <td>
+              <div class="cell-main">
+                <div class="cell-title">
+                  {{ d.title }}
+                </div>
+              </div>
+            </td>
+            <td>{{ d.company_name || ('#' + d.company_id) }}</td>
+            <td>{{ d.contact_name || (d.contact_id ? ('#' + d.contact_id) : '—') }}</td>
+            <td>
+              <span class="pill pill--stage">
+                {{ d.stage }}
+              </span>
+            </td>
+            <td>
+              {{ d.amount | number:'1.0-0' }} {{ d.currency }}
+            </td>
+            <td>{{ d.close_date || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- PAGINACIÓN -->
+      <div class="pagination">
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="prevPage()"
+          [disabled]="page === 1"
+        >
+          ← Previous
+        </button>
+
+        <span class="page-info">
+          Page {{ page }}
+          <span *ngIf="isLastPage">(last)</span>
+        </span>
+
+        <button
+          class="btn btn-ghost"
+          type="button"
+          (click)="nextPage()"
+          [disabled]="isLastPage"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+
+    <!-- LOADING DETALLE -->
+    <div *ngIf="detailLoading" class="detail-loading">
+      Loading deal details...
+    </div>
+
+    <!-- TARJETA DETALLE DEAL -->
+    <div *ngIf="selectedDeal" class="detail-card">
+      <div class="detail-card__header">
+        <div>
+          <h3 class="detail-title">
+            {{ selectedDeal.title }}
+          </h3>
+          <p class="detail-subtitle">
+            {{ selectedDeal.company_name || ('Company #' + selectedDeal.company_id) }}
+          </p>
+        </div>
+
+        <div class="detail-header-right">
+          <div class="detail-amount">
+            {{ selectedDeal.amount | number:'1.0-0' }} {{ selectedDeal.currency }}
+          </div>
+
+          <div class="detail-stage-select">
+            <label>Stage</label>
+            <select
+              [value]="selectedDeal.stage"
+              (change)="updateStage($any($event.target).value)"
+            >
+              <option *ngFor="let s of stages" [value]="s">
+                {{ s | titlecase }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Contact</span>
+          <span class="detail-value">
+            {{ selectedDeal.contact_name || (selectedDeal.contact_id ? ('#' + selectedDeal.contact_id) : '—') }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Owner user ID</span>
+          <span class="detail-value">
+            {{ selectedDeal.owner_user_id || '—' }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Close date</span>
+          <span class="detail-value">
+            {{ selectedDeal.close_date || '—' }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Created at</span>
+          <span class="detail-value">
+            {{ selectedDeal.created_at || '—' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- 🧵 MINI TIMELINE -->
+      <div class="detail-timeline">
+        <div class="detail-timeline-header">
+          <h4>Timeline</h4>
+          <span class="detail-timeline-count">
+            {{ timeline.length }} activities
+          </span>
+        </div>
+
+        <div *ngIf="timelineLoading" class="timeline-loading">
+          Loading activities...
+        </div>
+
+        <div
+          *ngIf="!timelineLoading && timeline.length === 0"
+          class="timeline-empty"
+        >
+          No activities yet for this deal.
+        </div>
+
+        <ul
+          *ngIf="!timelineLoading && timeline.length > 0"
+          class="timeline-list"
+        >
+          <li *ngFor="let a of timeline" class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <div class="timeline-main">
+                <span class="timeline-type">
+                  {{ a.type | titlecase }}
+                </span>
+                <span class="timeline-subject">
+                  {{ a.subject }}
+                </span>
+              </div>
+
+              <div class="timeline-meta">
+                <span class="timeline-date">
+                  {{ a.due_date || 'No date' }}
+                </span>
+                <span *ngIf="a.contact_name" class="timeline-contact">
+                  · {{ a.contact_name }}
+                </span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="detail-footer">
+        <p class="detail-hint">
+          Usa este timeline para ver el hilo completo de interacciones de este deal.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
